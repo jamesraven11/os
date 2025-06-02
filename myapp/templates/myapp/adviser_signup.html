@@ -1,0 +1,46 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Adviser Signup</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-purple-100 flex items-center justify-center h-screen">
+    <div class="bg-white p-8 rounded shadow-md w-full max-w-sm">
+        <h2 class="text-2xl font-bold mb-6 text-purple-800 text-center">Adviser Signup</h2>
+
+        {% if messages %}
+            <ul class="mb-4">
+                {% for message in messages %}
+                    <li class="text-red-500 text-sm">{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        <!-- ✅ Make sure the form posts to the correct URL -->
+        <form method="POST" action="{% url 'adviser_signup' %}">
+            {% csrf_token %}
+            <div class="mb-4">
+                <label for="username" class="block text-gray-700">Username</label>
+                <input type="text" name="username" class="w-full p-2 border border-gray-300 rounded" required>
+            </div>
+            <div class="mb-4">
+                <label for="password" class="block text-gray-700">Password</label>
+                <input type="password" name="password" class="w-full p-2 border border-gray-300 rounded" required>
+            </div>
+            <div class="mb-6">
+                <label for="password2" class="block text-gray-700">Confirm Password</label>
+                <input type="password" name="password2" class="w-full p-2 border border-gray-300 rounded" required>
+            </div>
+            <button type="submit" class="w-full bg-purple-700 text-white py-2 px-4 rounded hover:bg-purple-800">
+                Sign Up
+            </button>
+        </form>
+
+        <p class="text-sm mt-4 text-center">
+            Already have an account?
+            <a href="{% url 'adviser_login' %}" class="text-purple-700 underline">Login</a>
+        </p>
+    </div>
+</body>
+</html>

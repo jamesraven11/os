@@ -1,0 +1,62 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Student Signup</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+
+    <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+        <h2 class="text-2xl font-bold text-center text-purple-700 mb-6">Student Signup</h2>
+
+        <!-- Show messages -->
+        {% if messages %}
+        <ul class="mb-4 text-red-600 text-sm">
+            {% for message in messages %}
+            <li>{{ message }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+
+        <form method="POST" action="{% url 'student_signup' %}" class="space-y-4">
+            {% csrf_token %}
+
+            <div>
+                <label for="username" class="block text-gray-700 font-medium">Username:</label>
+                <input type="text" id="username" name="username" required class="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-purple-500" />
+            </div>
+
+            <div>
+                <label for="password" class="block text-gray-700 font-medium">Password:</label>
+                <input type="password" id="password" name="password" required class="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-purple-500" />
+            </div>
+
+            <div>
+                <label for="password2" class="block text-gray-700 font-medium">Confirm Password:</label>
+                <input type="password" id="password2" name="password2" required class="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-purple-500" />
+            </div>
+
+            <div>
+                <label for="student_id" class="block text-gray-700 font-medium">Student ID:</label>
+                <input type="text" id="student_id" name="student_id" required class="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-purple-500" />
+            </div>
+
+            <div>
+                <label for="name" class="block text-gray-700 font-medium">Full Name:</label>
+                <input type="text" id="name" name="name" required class="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-purple-500" />
+            </div>
+
+            <div>
+                <button type="submit" class="w-full bg-purple-700 text-white py-2 rounded hover:bg-purple-800 transition">Sign Up</button>
+            </div>
+        </form>
+
+        <p class="mt-4 text-sm text-center text-gray-600">
+            Already have an account? <a href="{% url 'student_login' %}" class="text-purple-700 hover:underline">Login here</a>.
+        </p>
+    </div>
+
+</body>
+</html>

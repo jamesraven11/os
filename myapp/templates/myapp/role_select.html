@@ -1,0 +1,25 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Attendance System</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+</head>
+<body class="bg-gray-100 flex flex-col items-center justify-center min-h-screen text-center">
+
+    <div class="bg-white shadow-md rounded-lg p-10 max-w-md w-full">
+        <h1 class="text-3xl font-bold mb-6 text-purple-700">Welcome to the Attendance System</h1>
+
+        <div class="flex flex-col space-y-4">
+            <a href="{% url 'adviser_login' %}" class="bg-purple-700 hover:bg-purple-800 text-white font-semibold py-3 rounded transition duration-300">
+                Adviser Login
+            </a>
+            <a href="{% url 'student_login' %}" class="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded transition duration-300">
+                Student Login
+            </a>
+        </div>
+    </div>
+
+</body>
+</html>

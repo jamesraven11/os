@@ -1,0 +1,97 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Student Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+</head>
+<body class="bg-gray-100 text-gray-900 min-h-screen flex flex-col items-center p-6">
+
+    <!-- Top bar with Logout -->
+    <div class="w-full max-w-3xl mb-4 flex justify-between items-center">
+        <h1 class="text-xl font-bold">Student Dashboard</h1>
+        <form method="POST" action="{% url 'logout' %}" onsubmit="return confirmLogout();">
+            {% csrf_token %}
+            <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition">
+                🚪 Logout
+            </button>
+        </form>
+    </div>
+
+    <div class="max-w-3xl w-full bg-white p-6 rounded shadow">
+
+        <!-- Profile Summary -->
+        <div class="mb-6">
+            <h1 class="text-2xl font-bold mb-2">Welcome, {{ student.name }}</h1>
+            <p class="text-gray-600">Student ID: {{ student.student_id }}</p>
+            <p class="mt-1">
+                Attendance: <strong>{{ attendance_percentage|floatformat:2 }}%</strong>
+            </p>
+        </div>
+
+        <!-- Today's Attendance Status -->
+        <div class="mb-6 p-4 rounded {% if is_present_today %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+            {% if is_present_today %}
+                <p>You are marked <strong>Present</strong> today.</p>
+                <p>Checked in at: {{ todays_attendance.timestamp|date:"M d, Y H:i" }}</p>
+            {% else %}
+                <p>You are <strong>Absent</strong> today or haven't checked in yet.</p>
+            {% endif %}
+        </div>
+
+        <!-- Barcode Scan Button -->
+        <div class="mb-6">
+            <button id="scanBarcodeBtn" class="bg-purple-700 text-white px-6 py-3 rounded hover:bg-purple-800 transition">
+                Scan Barcode
+            </button>
+            <p id="scanStatus" class="mt-2 text-sm text-gray-600"></p>
+        </div>
+
+        <!-- Recent Attendance History -->
+        <div>
+            <h2 class="text-xl font-semibold mb-4">Recent Attendance</h2>
+            <table class="min-w-full border border-gray-300">
+                <thead>
+                    <tr class="bg-gray-100">
+                        <th class="p-2 border border-gray-300">Date</th>
+                        <th class="p-2 border border-gray-300">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for attendance in attendance_records %}
+                    <tr class="text-center">
+                        <td class="p-2 border border-gray-300">{{ attendance.timestamp|date:"M d, Y" }}</td>
+                        <td class="p-2 border border-gray-300">
+                            {% if attendance.present %}
+                                <span class="text-green-600 font-semibold">Present</span>
+                            {% else %}
+                                <span class="text-red-600 font-semibold">Absent</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="2" class="p-4 text-gray-500">No attendance records found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+    <!-- JS -->
+    <script>
+        document.getElementById('scanBarcodeBtn').addEventListener('click', function () {
+            const status = document.getElementById('scanStatus');
+            status.textContent = "Scanning started... (Implement scanning logic)";
+        });
+
+        function confirmLogout() {
+            return confirm("Are you sure you want to logout?");
+        }
+    </script>
+
+</body>
+</html>
