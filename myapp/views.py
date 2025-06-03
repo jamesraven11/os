@@ -8,12 +8,14 @@ from .models import Profile, Student, Attendance
 from .forms import StudentForm, ScanForm
 from datetime import timedelta
 from django.views.decorators.http import require_POST
+from .models import Profile
 
 # Role Selection Page
 def role_select_view(request):
     return render(request, 'myapp/role_select.html')
 
-# Adviser Signup
+# Adviser Signup  # Make sure you import your Profile model
+
 def adviser_signup(request):
     if request.method == "POST":
         username = request.POST.get("username")
@@ -270,17 +272,6 @@ def student_update(request, pk):
     else:
         form = StudentForm(instance=student)
     return render(request, 'myapp/student_form.html', {'form': form, 'title': 'Edit Student'})
-
-# # Adviser: Delete student
-# @login_required
-# @user_passes_test(is_adviser)
-# def student_delete(request, pk):
-#     student = get_object_or_404(Student, pk=pk)
-#     if request.method == 'POST':
-#         student.delete()
-#         messages.success(request, "Student deleted successfully.")
-#         return redirect('adviser_dashboard')
-#     return render(request, 'myapp/student_confirm_delete.html', {'student': student})
 
 
 @login_required

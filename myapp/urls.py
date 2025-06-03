@@ -13,6 +13,8 @@ urlpatterns = [
 
     # Signups
     path('signup/student/', views.student_signup, name='student_signup'),
+    path('signup/adviser/', views.adviser_signup, name='adviser_signup'),
+
 
     # Dashboards
     path('adviser-dashboard/', views.adviser_dashboard, name='adviser_dashboard'),
