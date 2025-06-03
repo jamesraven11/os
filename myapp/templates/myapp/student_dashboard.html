@@ -5,11 +5,12 @@
     <meta charset="UTF-8" />
     <title>Student Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.5/dist/cdn.min.js" defer></script>
 </head>
 <body class="bg-gray-100 text-gray-900 min-h-screen flex flex-col items-center p-6">
 
     <!-- Top bar with Logout -->
-    <div class="w-full max-w-3xl mb-4 flex justify-between items-center">
+    <div class="w-full max-w-4xl mb-4 flex justify-between items-center">
         <h1 class="text-xl font-bold">Student Dashboard</h1>
         <form method="POST" action="{% url 'logout' %}" onsubmit="return confirmLogout();">
             {% csrf_token %}
@@ -19,75 +20,77 @@
         </form>
     </div>
 
-    <div class="max-w-3xl w-full bg-white p-6 rounded shadow">
+    <!-- Flash Messages -->
+    {% if messages %}
+    <div class="w-full max-w-4xl mb-4">
+        {% for message in messages %}
+        <div class="p-4 mb-2 rounded text-white 
+            {% if message.tags == 'error' %}bg-red-500
+            {% elif message.tags == 'success' %}bg-green-500
+            {% else %}bg-blue-500{% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
 
-        <!-- Profile Summary -->
+    <!-- Main Content -->
+    <div class="max-w-4xl w-full bg-white p-6 rounded shadow">
+
+        <!-- Welcome Section -->
         <div class="mb-6">
-            <h1 class="text-2xl font-bold mb-2">Welcome, {{ student.name }}</h1>
+            <h2 class="text-2xl font-bold mb-1">Welcome, {{ student.name }}</h2>
             <p class="text-gray-600">Student ID: {{ student.student_id }}</p>
-            <p class="mt-1">
-                Attendance: <strong>{{ attendance_percentage|floatformat:2 }}%</strong>
-            </p>
         </div>
 
-        <!-- Today's Attendance Status -->
-        <div class="mb-6 p-4 rounded {% if is_present_today %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
-            {% if is_present_today %}
-                <p>You are marked <strong>Present</strong> today.</p>
-                <p>Checked in at: {{ todays_attendance.timestamp|date:"M d, Y H:i" }}</p>
-            {% else %}
-                <p>You are <strong>Absent</strong> today or haven't checked in yet.</p>
-            {% endif %}
-        </div>
-
-        <!-- Barcode Scan Button -->
-        <div class="mb-6">
-            <button id="scanBarcodeBtn" class="bg-purple-700 text-white px-6 py-3 rounded hover:bg-purple-800 transition">
-                Scan Barcode
+        <!-- Students Present Today -->
+        <div x-data="{ open: true }" class="mb-6 border rounded-lg shadow-sm">
+            <button @click="open = !open" class="w-full px-4 py-3 bg-gray-200 hover:bg-gray-300 text-left text-lg font-semibold flex justify-between items-center">
+                Students Present Today
+                <svg :class="{ 'rotate-180': open }" class="w-5 h-5 transform transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                </svg>
             </button>
-            <p id="scanStatus" class="mt-2 text-sm text-gray-600"></p>
-        </div>
-
-        <!-- Recent Attendance History -->
-        <div>
-            <h2 class="text-xl font-semibold mb-4">Recent Attendance</h2>
-            <table class="min-w-full border border-gray-300">
-                <thead>
-                    <tr class="bg-gray-100">
-                        <th class="p-2 border border-gray-300">Date</th>
-                        <th class="p-2 border border-gray-300">Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for attendance in attendance_records %}
-                    <tr class="text-center">
-                        <td class="p-2 border border-gray-300">{{ attendance.timestamp|date:"M d, Y" }}</td>
-                        <td class="p-2 border border-gray-300">
-                            {% if attendance.present %}
-                                <span class="text-green-600 font-semibold">Present</span>
-                            {% else %}
-                                <span class="text-red-600 font-semibold">Absent</span>
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="2" class="p-4 text-gray-500">No attendance records found.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+            <div x-show="open" x-transition class="p-4">
+                {% if present_students_today %}
+                <div class="overflow-x-auto">
+                    <table class="min-w-full table-auto border border-gray-200 text-sm text-left">
+                        <thead class="bg-gray-100">
+                            <tr>
+                                <th class="px-4 py-2 border-b">#</th>
+                                <th class="px-4 py-2 border-b">Name</th>
+                                <th class="px-4 py-2 border-b">Student ID</th>
+                                <th class="px-4 py-2 border-b">Time In</th>
+                                <th class="px-4 py-2 border-b">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for student in present_students_today %}
+                                {% for record in student.attendance_set.all %}
+                                    {% if record.timestamp.date == today %}
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-4 py-2 border-b">{{ forloop.parentloop.counter }}</td>
+                                        <td class="px-4 py-2 border-b">{{ student.name }}</td>
+                                        <td class="px-4 py-2 border-b">{{ student.student_id }}</td>
+                                        <td class="px-4 py-2 border-b">{{ record.timestamp|date:"h:i A" }}</td>
+                                        <td class="px-4 py-2 border-b text-green-600 font-semibold">Present</td>
+                                    </tr>
+                                    {% endif %}
+                                {% endfor %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                    <p class="text-gray-500">No students marked present today.</p>
+                {% endif %}
+            </div>
         </div>
 
     </div>
 
     <!-- JS -->
     <script>
-        document.getElementById('scanBarcodeBtn').addEventListener('click', function () {
-            const status = document.getElementById('scanStatus');
-            status.textContent = "Scanning started... (Implement scanning logic)";
-        });
-
         function confirmLogout() {
             return confirm("Are you sure you want to logout?");
         }

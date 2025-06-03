@@ -2,6 +2,7 @@ from django.urls import path
 from . import views
 from django.conf import settings
 from django.conf.urls.static import static
+from myapp.views import student_delete 
 
 urlpatterns = [
     path('', views.role_select_view, name='role_select'),
@@ -23,12 +24,15 @@ urlpatterns = [
     # Attendance
     path('scan/', views.scan_barcode, name='scan'),
     path('logout/', views.logout_view, name='logout'),
+    path('adviser/scan-barcode/', views.adviser_scan_barcode, name='adviser_scan_barcode'),
+
 
     # Student Management
     path('adviser/my-students/', views.my_students, name='my_students'),
     path('student/add/', views.student_create, name='student_add'),
     path('student/<int:pk>/edit/', views.student_update, name='student_edit'),
-    path('student/<int:id>/delete/', views.student_delete, name='student_delete'),
+    path('student/<int:student_id>/delete/', student_delete, name='student_delete')
+
 ]
 
 # Static files during development

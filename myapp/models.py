@@ -25,6 +25,12 @@ class Student(models.Model):
 
 # Attendance Model
 class Attendance(models.Model):
+
+    STATUS_CHOICES = [
+        ('Present', 'Present'),
+        ('Absent', 'Absent'),
+        ('Late', 'Late'),
+    ]
     student = models.ForeignKey(Student, on_delete=models.CASCADE)
     timestamp = models.DateTimeField(default=timezone.now)
     present = models.BooleanField(default=True)

@@ -7,12 +7,11 @@ from django.contrib.auth.models import User, Group
 from .models import Profile, Student, Attendance
 from .forms import StudentForm, ScanForm
 from datetime import timedelta
-
+from django.views.decorators.http import require_POST
 
 # Role Selection Page
 def role_select_view(request):
     return render(request, 'myapp/role_select.html')
-
 
 # Adviser Signup
 def adviser_signup(request):
@@ -30,17 +29,14 @@ def adviser_signup(request):
             return render(request, "myapp/adviser_signup.html")
 
         user = User.objects.create_user(username=username, password=password)
-
         adviser_group = Group.objects.get(name='adviser')
         user.groups.add(adviser_group)
-
         Profile.objects.create(user=user, role='adviser')
 
         messages.success(request, "Adviser account created successfully. Please log in.")
         return redirect('adviser_login')
 
     return render(request, 'myapp/adviser_signup.html')
-
 
 # Student Signup
 def student_signup(request):
@@ -64,10 +60,8 @@ def student_signup(request):
             return render(request, "myapp/student_signup.html")
 
         user = User.objects.create_user(username=username, password=password)
-
         student_group = Group.objects.get(name='student')
         user.groups.add(student_group)
-
         profile = Profile.objects.create(user=user, role='student')
         Student.objects.create(profile=profile, student_id=student_id, name=name)
 
@@ -75,7 +69,6 @@ def student_signup(request):
         return redirect('student_login')
 
     return render(request, 'myapp/student_signup.html')
-
 
 # Login View with role validation
 def login_view(request, role=None):
@@ -107,63 +100,36 @@ def login_view(request, role=None):
 
     return render(request, f'myapp/{role}_login.html')
 
-
 # Specific login views for roles
 def adviser_login_view(request):
     return login_view(request, role='adviser')
 
-
 def student_login_view(request):
     return login_view(request, role='student')
 
-
-# Check if user is adviser helper function
+# Helper checks
 def is_adviser(user):
     return hasattr(user, 'profile') and user.profile.role == 'adviser'
 
-
-# Check if user is student helper function
 def is_student(user):
     return hasattr(user, 'profile') and user.profile.role == 'student'
 
-
-# Adviser: List all students
-@login_required
-@user_passes_test(is_adviser)
-def my_students(request):
-    students = Student.objects.all()
-    return render(request, 'adviser/my_students.html', {'students': students})
-
-
-
-def is_adviser(user):
-    return hasattr(user, 'profile') and user.profile.role == 'adviser'
-
+# Adviser: Dashboard
 @login_required
 @user_passes_test(is_adviser)
 def adviser_dashboard(request):
-    # Get all students with their profiles (to minimize DB queries)
     students = Student.objects.all().select_related('profile')
-    
     total_students = students.count()
-
-    # Today's date
     today = timezone.now().date()
-
-    # Count how many attendance records were logged today
     todays_attendance_count = Attendance.objects.filter(timestamp__date=today).count()
-
-    # Define 'recent' as the last 3 days (can be adjusted)
-    recent_days = 3
-    recent_date = today - timedelta(days=recent_days)
+    recent_date = today - timedelta(days=3)
     recent_checkins_count = Attendance.objects.filter(timestamp__date__gte=recent_date).count()
 
-    # Prepare chart data for the last 5 days (labels and counts)
     chart_labels = []
     chart_data = []
-    for i in range(4, -1, -1):  # From 4 days ago to today
+    for i in range(4, -1, -1):
         day = today - timedelta(days=i)
-        chart_labels.append(day.strftime('%a'))  # e.g., 'Mon', 'Tue'
+        chart_labels.append(day.strftime('%a'))
         count = Attendance.objects.filter(timestamp__date=day).count()
         chart_data.append(count)
 
@@ -175,48 +141,61 @@ def adviser_dashboard(request):
         'chart_labels': chart_labels,
         'chart_data': chart_data,
     }
-    
+
     return render(request, 'myapp/adviser_dashboard.html', context)
 
-# Student Dashboard
+# Adviser: Student List
+@login_required
+@user_passes_test(is_adviser)
+def my_students(request):
+    students = Student.objects.all()
+    return render(request, 'adviser/my_students.html', {'students': students})
+
+# Student Dashboard (Only shows present students)
 @login_required
 @user_passes_test(is_student)
 def student_dashboard(request):
-    try:
-        student = Student.objects.get(profile__user=request.user)
-    except Student.DoesNotExist:
-        messages.error(request, "Student profile not found.")
-        return redirect('role_select')
+    profile = request.user.profile
+    if profile.role != 'student':
+        return render(request, 'unauthorized.html')
 
-    all_attendance = Attendance.objects.filter(student=student)
-
-    attendance_records = all_attendance.order_by('-timestamp')[:10]
-
-    total_days = 30  # Define as needed
-    attended_days = all_attendance.filter(present=True).count()
-    attendance_percentage = (attended_days / total_days) * 100 if total_days else 0
-
+    student = profile.student
     today = timezone.now().date()
-    todays_attendance = all_attendance.filter(timestamp__date=today).first()
-    is_present_today = todays_attendance.present if todays_attendance else False
+
+    # Get all attendance records for today
+    attendance_records_today = Attendance.objects.filter(timestamp__date=today).select_related('student')
+
+    # Prepare the list of students present today
+    student_ids_present = attendance_records_today.values_list('student_id', flat=True).distinct()
+    present_students_today = Student.objects.filter(id__in=student_ids_present).prefetch_related('attendance_set')
+
+    # Format the current student's attendance for today (optional)
+    attendance_data = [
+        {
+            'name': record.student.name,
+            'student_id': record.student.student_id,
+            'time': record.timestamp.strftime('%I:%M %p'),
+            'date': record.timestamp.date().strftime('%Y-%m-%d'),
+            'present': record.present,
+        }
+        for record in attendance_records_today if record.student == student
+    ]
 
     context = {
         'student': student,
-        'attendance_records': attendance_records,
-        'attendance_percentage': attendance_percentage,
-        'is_present_today': is_present_today,
-        'todays_attendance': todays_attendance,
+        'attendance_data': attendance_data,
+        'present_students_today': present_students_today,
+        'today': today,
     }
-    return render(request, 'myapp/student_dashboard.html', context)
 
+    return render(request, 'myapp/student_dashboard.html', context)
 
 # Logout
 def logout_view(request):
     logout(request)
     return redirect('role_select')
 
-
-# Barcode scan page, adviser only
+# Adviser: Barcode Scan
 @login_required
 @user_passes_test(is_adviser)
 def scan_barcode(request):
@@ -235,8 +214,35 @@ def scan_barcode(request):
         form = ScanForm()
     return render(request, 'myapp/scan.html', {'form': form, 'message': message})
 
+# Adviser: Barcode scan via POST
+@require_POST
+def adviser_scan_barcode(request):
+    barcode = request.POST.get('barcode', '').strip()
+    if not barcode:
+        messages.error(request, "No barcode scanned.")
+        return redirect('adviser_dashboard')
 
-# Create Student (adviser only)
+    try:
+        student = Student.objects.get(student_id=barcode)
+    except Student.DoesNotExist:
+        messages.error(request, "Student with that barcode not found.")
+        return redirect('adviser_dashboard')
+
+    today = timezone.now().date()
+    attendance, created = Attendance.objects.get_or_create(
+        student=student,
+        timestamp__date=today,
+        defaults={'present': True, 'timestamp': timezone.now()}
+    )
+
+    if not created:
+        messages.info(request, f"{student.name} has already been marked present today.")
+    else:
+        messages.success(request, f"Attendance recorded for {student.name}.")
+
+    return redirect('adviser_dashboard')
+
+# Adviser: Create student
 @login_required
 @user_passes_test(is_adviser)
 def student_create(request):
@@ -250,8 +256,7 @@ def student_create(request):
         form = StudentForm()
     return render(request, 'myapp/student_form.html', {'form': form, 'title': 'Add Student'})
 
-
-# Update Student (adviser only)
+# Adviser: Update student
 @login_required
 @user_passes_test(is_adviser)
 def student_update(request, pk):
@@ -266,19 +271,27 @@ def student_update(request, pk):
         form = StudentForm(instance=student)
     return render(request, 'myapp/student_form.html', {'form': form, 'title': 'Edit Student'})
 
+# # Adviser: Delete student
+# @login_required
+# @user_passes_test(is_adviser)
+# def student_delete(request, pk):
+#     student = get_object_or_404(Student, pk=pk)
+#     if request.method == 'POST':
+#         student.delete()
+#         messages.success(request, "Student deleted successfully.")
+#         return redirect('adviser_dashboard')
+#     return render(request, 'myapp/student_confirm_delete.html', {'student': student})
 
-# Delete Student (adviser only) with confirmation
+
 @login_required
-@user_passes_test(is_adviser)
-def student_delete(request, pk):
-    student = get_object_or_404(Student, pk=pk)
+def student_delete(request, student_id):
+    student = get_object_or_404(Student, id=student_id)
     if request.method == 'POST':
         student.delete()
-        messages.success(request, "Student deleted successfully.")
-        return redirect('adviser_dashboard')
+        return redirect('adviser_dashboard')  # Change this if your list view uses a different name
     return render(request, 'myapp/student_confirm_delete.html', {'student': student})
 
 
-# Enrollment page placeholder
+# Placeholder enrollment page
 def enroll_student(request):
     return render(request, 'myapp/enroll.html')

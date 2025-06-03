@@ -24,7 +24,24 @@
 
     <!-- Main Content -->
     <main class="flex-1 p-6 overflow-y-auto">
-        <h2 class="text-3xl font-semibold mb-6">Dashboard Overview</h2>
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-3xl font-semibold">Dashboard Overview</h2>
+
+            <!-- Scan Barcode Button -->
+            <button type="button" id="scanBarcodeBtn" 
+                class="bg-purple-700 text-white px-6 py-3 rounded hover:bg-purple-800 transition">
+                📷 Scan Barcode
+            </button>
+        </div>
+
+        <!-- Hidden form for barcode input -->
+        <form id="barcodeForm" method="POST" action="{% url 'adviser_scan_barcode' %}" class="mt-4 hidden max-w-md">
+            {% csrf_token %}
+            <input type="text" name="barcode" id="barcodeInput" autofocus
+                   class="border border-gray-300 p-2 rounded w-full text-lg"
+                   placeholder="Scan student barcode here..." />
+        </form>
+        <p id="scanStatus" class="mt-2 text-sm text-gray-600 max-w-md"></p>
 
         <!-- Summary Cards -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -96,6 +113,7 @@
 </div>
 
 <script>
+    // Chart.js code remains unchanged
     const ctx = document.getElementById('attendanceChart').getContext('2d');
     const attendanceChart = new Chart(ctx, {
         type: 'bar',
@@ -111,6 +129,25 @@
             scales: {
                 y: { beginAtZero: true }
             }
+        }
+    });
+
+    // Scan barcode button functionality
+    const scanBtn = document.getElementById('scanBarcodeBtn');
+    const form = document.getElementById('barcodeForm');
+    const input = document.getElementById('barcodeInput');
+    const status = document.getElementById('scanStatus');
+
+    scanBtn.addEventListener('click', () => {
+        form.classList.remove('hidden');
+        input.focus();
+        status.textContent = "Ready to scan. Please scan the student's barcode.";
+    });
+
+    input.addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            form.submit();
         }
     });
 </script>
