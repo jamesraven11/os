@@ -2,10 +2,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
     <title>Adviser Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
 </head>
 <body class="bg-gray-100 text-gray-800">
 <div class="flex h-screen">
@@ -15,9 +15,6 @@
         <nav class="space-y-2">
             <a href="#" class="block hover:bg-purple-700 p-2 rounded">🏠 Dashboard</a>
             <a href="#" class="block hover:bg-purple-700 p-2 rounded">🎓 My Students</a>
-            <a href="#" class="block hover:bg-purple-700 p-2 rounded">📊 Attendance Logs</a>
-            <a href="#" class="block hover:bg-purple-700 p-2 rounded">📤 Generate Reports</a>
-            <a href="#" class="block hover:bg-purple-700 p-2 rounded">⚙️ Settings</a>
             <a href="{% url 'logout' %}" class="block hover:bg-red-600 mt-4 p-2 rounded">🚪 Logout</a>
         </nav>
     </aside>
@@ -113,24 +110,38 @@
 </div>
 
 <script>
-    // Chart.js code remains unchanged
-    const ctx = document.getElementById('attendanceChart').getContext('2d');
-    const attendanceChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
-            datasets: [{
-                label: 'Attendance',
-                data: [32, 35, 30, 38, 40],
-                backgroundColor: 'rgba(124, 58, 237, 0.7)'
-            }]
-        },
-        options: {
-            scales: {
-                y: { beginAtZero: true }
-            }
+    // Function to initialize or update the attendance chart
+    function renderAttendanceChart(dataLabels, dataValues) {
+        const ctx = document.getElementById('attendanceChart').getContext('2d');
+
+        // Destroy existing chart instance if exists to avoid overlay
+        if (window.attendanceChartInstance) {
+            window.attendanceChartInstance.destroy();
         }
-    });
+
+        window.attendanceChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: dataLabels,
+                datasets: [{
+                    label: 'Attendance',
+                    data: dataValues,
+                    backgroundColor: 'rgba(124, 58, 237, 0.7)'
+                }]
+            },
+            options: {
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+    }
+
+    // Initial chart render with default data
+    renderAttendanceChart(
+        ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
+        [32, 35, 30, 38, 40]
+    );
 
     // Scan barcode button functionality
     const scanBtn = document.getElementById('scanBarcodeBtn');
