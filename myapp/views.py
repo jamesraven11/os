@@ -65,7 +65,7 @@ def student_signup(request):
         student_group = Group.objects.get(name='student')
         user.groups.add(student_group)
         profile = Profile.objects.create(user=user, role='student')
-        Student.objects.create(profile=profile, student_id=student_id, name=name)
+        Student.objects.create(profile=profile, student_id=student_id, name=name, barcode=student_id)
 
         messages.success(request, "Student account created successfully. Please log in.")
         return redirect('student_login')
