@@ -19,13 +19,14 @@ class Student(models.Model):
     profile = models.OneToOneField(Profile, on_delete=models.CASCADE)
     student_id = models.CharField(max_length=50, unique=True)
     name = models.CharField(max_length=100)
+    barcode = models.CharField(max_length=100, unique=True)
+
 
     def __str__(self):
         return f"{self.name} ({self.student_id})"
 
 # Attendance Model
 class Attendance(models.Model):
-
     STATUS_CHOICES = [
         ('Present', 'Present'),
         ('Absent', 'Absent'),
