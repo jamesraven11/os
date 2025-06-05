@@ -36,41 +36,25 @@ def mark_attendance(student_id):
 
 
 # Setup barcode scanner
-device = InputDevice('/dev/input/event0')  # Adjust based on your Orange Pi's event number
+device = InputDevice('/dev/input/event2')  # Adjust based on your Orange Pi's event number
 barcode = ''
-
 print("Waiting for barcode scan...")
 
-
-while True:
-    barcode = input()
-    print(f"Scanned Barcode: {barcode}")
-    try:
-        student = Student.objects.get(barcode=barcode)
-        Attendance.objects.create(student=student)
-        print(f"Attendance recorded for {student}")
-    except Student.DoesNotExist:
-        print("No student found with that barcode.")
-
-
-# for event in device.read_loop():
-#     if event.type == ecodes.EV_KEY:
-#         key_event = categorize(event)
-#         if key_event.keystate == key_event.key_down:
-#             key = key_event.keycode
-#             if key == 'KEY_ENTER':
-#                 print("Scanned barcode:", barcode)
-
-#                 # Optional: process attendance (example logic)
-#                 try:
-#                     student = Student.objects.get(barcode=barcode)
-#                     Attendance.objects.create(student=student)
-#                     print(f"Attendance recorded for {student}")
-#                 except Student.DoesNotExist:
-#                     print("No student found with that barcode.")
-
-#                 barcode = ''
-#             elif key.startswith('KEY_'):
-#                 char = key[4:].lower()
-#                 if len(char) == 1:  # Only accept single character keys
-#                     barcode += char
+for event in device.read_loop():
+    if event.type == ecodes.EV_KEY:
+        key_event = categorize(event)
+        if key_event.keystate == key_event.key_down:
+            key = key_event.keycode
+            if key == 'KEY_ENTER':
+                print("Scanned barcode:", barcode)
+                try:
+                    student = Student.objects.get(barcode=barcode)
+                    Attendance.objects.create(student=student)
+                    print(f"Attendance recorded for {student}")
+                except Student.DoesNotExist:
+                    print("No student found with that barcode.")
+                barcode = ''
+            elif key.startswith('KEY_'):
+                char = '-' if key == 'KEY_MINUS' else key[4:].lower()
+                barcode += char
+    
